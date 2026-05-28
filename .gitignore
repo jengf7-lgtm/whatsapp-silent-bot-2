@@ -1,0 +1,28 @@
+# Dependency directories
+node_modules/
+
+# WhatsApp Web JS auth and cache directories (Contains sensitive session data)
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
