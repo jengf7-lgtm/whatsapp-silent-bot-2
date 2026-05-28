@@ -1,7 +1,7 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const qrcodeImg = require('qrcode'); // ✅ ใช้สร้างรูป QR Code แท้ๆ สำหรับหน้าเว็บ
 const http = require('http'); // ✅ สร้าง HTTP server จำลองให้ Render ตรวจเจอ port
-
 let currentQR = '';
 let botStatus = 'Starting...';
 
@@ -18,10 +18,10 @@ http.createServer((req, res) => {
             <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
                 <h2>สถานะ: ${botStatus}</h2>
                 <p>กรุณาสแกน QR Code ด้านล่างนี้เพื่อเชื่อมต่อ WhatsApp</p>
-                <div id="qrcode" style="display: flex; justify-content: center; margin-top: 20px;"></div>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                <div style="display: flex; justify-content: center; margin-top: 20px;">
+                    <img src="${currentQR}" alt="QR Code" style="width: 256px; height: 256px; border: 10px solid white; border-radius: 10px;" />
+                </div>
                 <script>
-                    new QRCode(document.getElementById("qrcode"), "${currentQR}");
                     setTimeout(() => location.reload(), 5000); // รีเฟรชหน้าอัตโนมัติทุก 5 วินาที
                 </script>
             </body>
@@ -74,10 +74,14 @@ const client = new Client({
 
 const imageCounter = new Map();
 
-client.on('qr', (qr) => {
-    currentQR = qr;
+client.on('qr', async (qr) => {
     botStatus = 'รอการสแกน QR Code';
     qrcode.generate(qr, { small: true }); // ยังคงแสดงใน Console ด้วย
+    try {
+        currentQR = await qrcodeImg.toDataURL(qr); // แปลงเป็น Base64 Image
+    } catch (err) {
+        console.error('Failed to generate QR image', err);
+    }
 });
 
 client.on('ready', () => {
