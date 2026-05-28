@@ -2,15 +2,44 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const http = require('http'); // ✅ สร้าง HTTP server จำลองให้ Render ตรวจเจอ port
 
+let currentQR = '';
+let botStatus = 'Starting...';
+
 // ==========================================
-// 🌐 HTTP Health-check Server สำหรับ Render
+// 🌐 HTTP Health-check Server สำหรับ Render (อัพเกรดให้แสดง QR Code บนหน้าเว็บ)
 // ==========================================
 const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('WhatsApp Bot is running!');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    if (currentQR) {
+        res.end(`
+            <html>
+            <head><title>WhatsApp Bot Setup</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
+                <h2>สถานะ: ${botStatus}</h2>
+                <p>กรุณาสแกน QR Code ด้านล่างนี้เพื่อเชื่อมต่อ WhatsApp</p>
+                <div id="qrcode" style="display: flex; justify-content: center; margin-top: 20px;"></div>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+                <script>
+                    new QRCode(document.getElementById("qrcode"), "${currentQR}");
+                    setTimeout(() => location.reload(), 5000); // รีเฟรชหน้าอัตโนมัติทุก 5 วินาที
+                </script>
+            </body>
+            </html>
+        `);
+    } else {
+        res.end(`
+            <html>
+            <head><title>WhatsApp Bot Status</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
+                <h2>สถานะ: ${botStatus}</h2>
+                <script>setTimeout(() => location.reload(), 5000);</script>
+            </body>
+            </html>
+        `);
+    }
 }).listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 Health-check server listening on port ${PORT}`);
+    console.log(`🌐 Web server listening on port ${PORT}`);
 });
 
 const client = new Client({
@@ -45,8 +74,17 @@ const client = new Client({
 
 const imageCounter = new Map();
 
-client.on('qr', (qr) => qrcode.generate(qr, { small: true }));
-client.on('ready', () => console.log('🚀 บอทระบบโล่ล้างบาง 5 วินาที (Fix Bug) พร้อมรัน 24 ชม.'));
+client.on('qr', (qr) => {
+    currentQR = qr;
+    botStatus = 'รอการสแกน QR Code';
+    qrcode.generate(qr, { small: true }); // ยังคงแสดงใน Console ด้วย
+});
+
+client.on('ready', () => {
+    currentQR = '';
+    botStatus = '✅ บอททำงานปกติ (Connected)';
+    console.log('🚀 บอทระบบโล่ล้างบาง 5 วินาที (Fix Bug) พร้อมรัน 24 ชม.');
+});
 
 client.on('message', async (msg) => {
     if (!msg.from.endsWith('@g.us')) return;
