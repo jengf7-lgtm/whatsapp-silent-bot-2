@@ -1,5 +1,17 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const http = require('http'); // ✅ สร้าง HTTP server จำลองให้ Render ตรวจเจอ port
+
+// ==========================================
+// 🌐 HTTP Health-check Server สำหรับ Render
+// ==========================================
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('WhatsApp Bot is running!');
+}).listen(PORT, '0.0.0.0', () => {
+    console.log(`🌐 Health-check server listening on port ${PORT}`);
+});
 
 const client = new Client({
     authStrategy: new LocalAuth(),
